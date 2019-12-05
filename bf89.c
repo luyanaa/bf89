@@ -160,7 +160,7 @@ void OutPutMemValue(){
 }
 
 void InputMemValue(){
-	*(GetMemRef(MemPointer))=getchar();
+	*(GetMemRef(MemPointer))=getc(stdin);
 	return ;
 }
 
@@ -191,23 +191,29 @@ void JumpBackward(){
 int main(int argc,char **argv){
 	fprintf(stdout,"bf89 - A Simple BrainF**k Interpreter In Pure C89\n");
 	
-	if(argc != 1) {
-		fprintf(stderr,"Usage: bf <Source Code>\n");
+	if(argc != 2 && argc != 3 && argc!= 4) {
+		fprintf(stderr,"Usage: %s <Source Code> (<Input> <Output>) \n",argv[0]);
 		exit(-1);
 	}
-	
-	FSrcPointer=fopen(argv[0],"r");
+		
+	FSrcPointer=fopen(argv[1],"r");
 	
 	if(FSrcPointer==(FILE *)NULL) {
 		fprintf(stderr,"Error when open file %s\n",argv[0]);
 		exit(-1);
 	}
 
+	if(argc >= 3) 
+		freopen(argv[2],"r",stdin);	
+	
+	if(argc == 4) 
+		freopen(argv[3],"w",stdout);
+
+	setvbuf(stdin,NULL,_IONBF,1);
 	/* Start with [-499,500] */	
 	NewBlock(++BlockCount,-499,500);
 
-	while(!feof(FSrcPointer)) {
-		OpBuf=fgetc(FSrcPointer);
+	while((OpBuf=fgetc(FSrcPointer)) && (!feof(FSrcPointer))) {
 		switch (OpBuf) {
 			case '>' :
 				IncMemPointer();
@@ -222,10 +228,10 @@ int main(int argc,char **argv){
 				DecMemValue();
 				break;
 			case '.' :
-				InputMemValue();
+				OutPutMemValue();
 				break;
 			case ',' :
-				OutPutMemValue();
+				InputMemValue();
 				break;
 			case '[' :
 				JumpForward();
@@ -234,13 +240,14 @@ int main(int argc,char **argv){
 				JumpBackward();
 				break;
 			default :
-				ThrowError(InvaildOperation);
 				break;
 		}
 	}
-
+	putchar('\n');
 	fclose(FSrcPointer);
 	free(UsableBlock);
+	fclose(stdin);
+	fclose(stdout);
 	return 0;
 }
 
