@@ -15,12 +15,13 @@ typedef long SignedIntType;
 #define UMAX ULONG_MAX
 ErrType UnpairedOp=-2,InvaildOperation=-3;
 #define MAXBLOCK 100
+#define BLOCKSIZE 1000
 IntType BlockCount=0;
 SignedIntType BlockLeft[MAXBLOCK],BlockRight[MAXBLOCK],LeftMost=SMAX,RightMost=SMIN;
 
 typedef struct MemBlock{
 	IntType BlockNum;
-	char Buf[1000];
+	char Buf[BLOCKSIZE];
 	SignedIntType L,R;
 }MemBlock;
 MemBlock *UsableBlock;
@@ -57,7 +58,7 @@ void BackupBlock() {
 	size_t Output;
 	BlockTempFile=fopen(FILENAME,"w");
 	fprintf(BlockTempFile,"%s,",itoa(UsableBlock->BlockNum));
-	for(Output=0;Output<1000;++Output) fprintf(BlockTempFile,"%s,",itoa(UsableBlock->Buf[Output]));
+	for(Output=0;Output<BLOCKSIZE;++Output) fprintf(BlockTempFile,"%s,",itoa(UsableBlock->Buf[Output]));
 	fprintf(BlockTempFile,"%s,%s",UsableBlock->L>=0?itoa(UsableBlock->L):strcat("-",itoa(UsableBlock->L)),UsableBlock->R>=0?itoa(UsableBlock->R):strcat("-",itoa(UsableBlock->R)));
 	fclose(BlockTempFile);
 	free(FILENAME);
@@ -79,10 +80,10 @@ SignedIntType ReadValue(FILE *fp){
 void ReadBlock(IntType BlockNum) {
 	FILE *BlockTempFile;
 	char *FILENAME=strcat("BF89",strcat(itoa(UsableBlock->BlockNum),".TMP"));
-	
+	size_t i;
 	BlockTempFile=fopen(FILENAME,"r");
 	UsableBlock->BlockNum=ReadValue(BlockTempFile);
-	for(int i=0;i<1000;++i) {
+	for(i=0;i<1000;++i) {
 		UsableBlock->Buf[i]=(char)ReadValue(BlockTempFile);
 	}
 	UsableBlock->L=ReadValue(BlockTempFile);
