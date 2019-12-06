@@ -8,5 +8,5 @@ clean:
 check: 
 	./bf89 ./examples/helloworld.b ./examples/helloworld.in ./examples/helloworld.test
 	diff ./examples/helloworld.out ./examples/helloworld.test
-	./bf89 ./examples/counter.b ./examples/counter.in ./examples/counter.test
-	diff ./examples/counter.out ./examples/counter.test
+	./bf89 ./examples/beer.b ./examples/beer.in ./examples/beer.test
+	diff ./examples/beer.out ./examples/beer.test

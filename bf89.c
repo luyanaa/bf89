@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-
+#define DEBUG
 /* bf89 - A Simple BrainF**k Interpreter In Pure C89 */
 
 FILE *FSrcPointer,*FLogPointer,*FTempPointer;
@@ -107,7 +107,9 @@ void ExchangeBlock(){
 	IntType BlockI;
 	unsigned char FindBlock=0;
 	if (MemPointer < UsableBlock->L || MemPointer > UsableBlock->R) {
-		
+		#ifdef DEBUG
+			printf("Block has been exchanged\n");
+		#endif	
 		/* Make a backup of the block in the memory. */
 		BackupBlock();
 		free(UsableBlock);
@@ -167,11 +169,14 @@ void InputMemValue(){
 
 void JumpForward(){
 	char Buf;
+	size_t LeftNum=1,RightNum=0;
 	if ( (*GetMemRef(MemPointer)) ==0 ) {
 		while ((Buf=fgetc(FSrcPointer))&&!feof(FSrcPointer)) {
-			if(Buf == ']') return ;
+			if(Buf == ']') ++RightNum;
+			if(Buf == '[') ++LeftNum;
+			if(LeftNum == RightNum) break;
 		}
-		if ( Buf != ']' ) {
+		if ( feof(FSrcPointer) ) {
 			ThrowError(UnpairedOp);
 		}
 	}
@@ -179,11 +184,15 @@ void JumpForward(){
 
 void JumpBackward(){
 	char Buf;
+	size_t RightNum=1,LeftNum=0;
 	if ( (*GetMemRef(MemPointer)) != 0 ) {
+		fseek(FSrcPointer,-1,SEEK_CUR);
 		while (fseek(FSrcPointer,-1,SEEK_CUR)==0){
 			Buf=fgetc(FSrcPointer);
 			if(feof(FSrcPointer)) ThrowError(UnpairedOp);
-			if(Buf=='[') break;
+			if(Buf=='[') ++LeftNum;
+			if(Buf==']') ++RightNum;
+			if(LeftNum == RightNum) break;
 			if(fseek(FSrcPointer,-1,SEEK_CUR)) ThrowError(UnpairedOp);
 		}
 	}
@@ -193,7 +202,7 @@ int main(int argc,char **argv){
 	
 	if(argc != 2 && argc != 3 && argc!= 4) {
 		fprintf(stderr,"bf89 - A Simple BrainF**k Interpreter In Pure C89\n");
-		fprintf(stderr,"Usage: %s <Source Code> (<Input> <Output>) \n",argv[0]);
+		fprintf(stderr,"Usage: %s <Source Code> (<Input>) (<Output>) \n",argv[0]);
 		exit(-1);
 	}
 		
