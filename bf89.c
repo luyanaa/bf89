@@ -190,9 +190,9 @@ void JumpBackward(){
 }
 
 int main(int argc,char **argv){
-	fprintf(stdout,"bf89 - A Simple BrainF**k Interpreter In Pure C89\n");
 	
 	if(argc != 2 && argc != 3 && argc!= 4) {
+		fprintf(stderr,"bf89 - A Simple BrainF**k Interpreter In Pure C89\n");
 		fprintf(stderr,"Usage: %s <Source Code> (<Input> <Output>) \n",argv[0]);
 		exit(-1);
 	}
@@ -244,7 +244,6 @@ int main(int argc,char **argv){
 				break;
 		}
 	}
-	putchar('\n');
 	fclose(FSrcPointer);
 	free(UsableBlock);
 	fclose(stdin);
