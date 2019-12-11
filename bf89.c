@@ -14,7 +14,7 @@ typedef long SignedIntType;
 #define UMAX ULONG_MAX
 ErrType UnpairedOp=-2,InvaildOperation=-3;
 #define MAXBLOCK 5000
-#define BLOCKSIZE 3000
+#define BLOCKSIZE 30000
 
 IntType BlockCount=0;
 IntType BlockLeft[MAXBLOCK],BlockRight[MAXBLOCK],LeftMost=SMAX,RightMost=0;
@@ -48,21 +48,15 @@ void ThrowError(ErrType ErrValue){
 }
 
 char *itoa(IntType Value){
-
 	char *Buf=(char *)malloc(sizeof(char)*10),FLAG=0;
 	IntType Length=0,i;
 	memset(Buf,0,sizeof(char)*10);
 	if(Value==0) { Buf[0]='0';Buf[1]='\0'; return Buf;}
-	
 	while(Value){
 		Buf[Length++]=Value%10+'0';
 		Value/=10;
 	}
 	for(i=0;i<Length/2;++i) Buf[i]^=Buf[Length-i-1],Buf[Length-i-1]^=Buf[i],Buf[i]^=Buf[Length-i-1];
-	if(FLAG){	
-		for(i=0;i<Length;++i) Buf[i+1]=Buf[i];
-		Buf[0]='-';
-	}
 	return Buf;
 }
 	
@@ -70,16 +64,28 @@ char *itoa(IntType Value){
 void BackupBlock() {
 	FILE *BlockTempFile;
 	char *FILENAME=(char *)malloc(sizeof(char)*10);
+	char *nStrTmp;
 	strcpy(FILENAME,"BF89");
 	strcat(FILENAME,strcat(itoa(UsableBlock->BlockNum),".TMP"));
 	size_t Output;
 	BlockTempFile=fopen(FILENAME,"w");
-	fprintf(BlockTempFile,"%s,",itoa(UsableBlock->BlockNum));
-	for(Output=0;Output<BLOCKSIZE;++Output) fprintf(BlockTempFile,"%s,",itoa(UsableBlock->Buf[Output]));
-	fprintf(BlockTempFile,"%s,%s",itoa(UsableBlock->L),itoa(UsableBlock->R));
-	
+	nStrTmp=itoa(UsableBlock->BlockNum);
+	fprintf(BlockTempFile,"%s,",nStrTmp);
+	free(nStrTmp);
+	for(Output=0;Output<BLOCKSIZE;++Output){
+		nStrTmp=itoa(UsableBlock->Buf[Output]);
+		fprintf(BlockTempFile,"%s,",nStrTmp);
+		free(nStrTmp);
+	}
+	nStrTmp=itoa(UsableBlock->L);
+	fprintf(BlockTempFile,"%s,",nStrTmp);
+	free(nStrTmp);
+	nStrTmp=itoa(UsableBlock->R);
+	fprintf(BlockTempFile,"%s,",nStrTmp);
+	free(nStrTmp);
 	fclose(BlockTempFile);
 	free(FILENAME);
+	return ;
 }
 
 IntType ReadValue(FILE *fp){
@@ -96,13 +102,15 @@ IntType ReadValue(FILE *fp){
 
 /* void ReadBlock(IntType) */
 void ReadBlock(IntType BlockNum) {
-	FILE *BlockTempFile;
-	char *FILENAME=strcat("BF89",strcat(itoa(UsableBlock->BlockNum),".TMP"));
 	size_t i;
+	FILE *BlockTempFile;
+	char *FILENAME=(char *)malloc(sizeof(char)*10);
+        strcpy(FILENAME,"BF89");
+        strcat(FILENAME,strcat(itoa(UsableBlock->BlockNum),".TMP"));
 	BlockTempFile=fopen(FILENAME,"r");
 	UsableBlock=(MemBlock *)malloc(sizeof(MemBlock));
 	UsableBlock->BlockNum=ReadValue(BlockTempFile);
-	for(i=0;i<1000;++i) {
+	for(i=0;i<BLOCKSIZE;++i) {
 		UsableBlock->Buf[i]=(char)ReadValue(BlockTempFile);
 	}
 	UsableBlock->L=ReadValue(BlockTempFile);
@@ -114,10 +122,6 @@ void ReadBlock(IntType BlockNum) {
 
 /* void NewBlock (IntType,IntType,IntType) */
 void NewBlock(IntType BlockNum,IntType L,IntType R){
-
-	#ifdef DEBUG
-		printf("%lu %ld %ld\n",BlockNum,L,R);
-	#endif 
 	LeftMost=min(L,LeftMost);
 	RightMost=max(R,RightMost);
 	UsableBlock=(MemBlock *)malloc(sizeof(MemBlock));
@@ -135,11 +139,11 @@ void ExchangeBlock(){
 		#ifdef DEBUG
 			printf("Block has been exchanged\n");
 		#endif	
-		/* Make a backup of the block in the memory. */
+		/* Make a backup of the block in the memory and delete it from memory. */
 		BackupBlock();
 		free(UsableBlock);
 		
-		/* Find if there exists a right block */
+		/* Find if there exists the block we need. */
 		for(BlockI=0;BlockI<BlockCount;++BlockI) {
 			if(MemPointer<=BlockRight[BlockI]&&MemPointer>=BlockLeft[BlockI]) {
 				FindBlock=1;
@@ -149,8 +153,8 @@ void ExchangeBlock(){
 		
 		if(FindBlock) ReadBlock(BlockI);
 		else {
-			if(BlockI<LeftMost) NewBlock(++BlockCount,LeftMost-1000,LeftMost-1);
-			if(BlockI>RightMost) NewBlock(++BlockCount,RightMost+1,RightMost+1000);
+			if(BlockI<LeftMost) NewBlock(++BlockCount,LeftMost-BLOCKSIZE,LeftMost-1);
+			if(BlockI>RightMost) NewBlock(++BlockCount,RightMost+1,RightMost+BLOCKSIZE);
 		}
 	}
 	return ;
@@ -224,13 +228,11 @@ void JumpBackward(){
 }
 
 int main(int argc,char **argv){
-	
 	if(argc != 2 && argc != 3 && argc!= 4) {
 		fprintf(stderr,"bf89 - A Simple BrainF**k Interpreter In Pure C89\n");
 		fprintf(stderr,"Usage: %s <Source Code> (<Input>) (<Output>) \n",argv[0]);
 		exit(-1);
 	}
-		
 	FSrcPointer=fopen(argv[1],"r");
 	
 	if(FSrcPointer==(FILE *)NULL) {
@@ -244,10 +246,10 @@ int main(int argc,char **argv){
 	if(argc == 4) 
 		freopen(argv[3],"w",stdout);
 
-	setvbuf(stdin,NULL,_IONBF,1);
 	NewBlock(++BlockCount,0,BLOCKSIZE-1);
 
 	while((OpBuf=fgetc(FSrcPointer)) && (!feof(FSrcPointer))) {
+		/* Read Next Operation into OpBuf and decide what to do according to Brainf**k standard. */
 		switch (OpBuf) {
 			case '>' :
 				IncMemPointer();
@@ -277,6 +279,7 @@ int main(int argc,char **argv){
 				break;
 		}
 	}
+
 	fclose(FSrcPointer);
 	free(UsableBlock);
 	fclose(stdin);

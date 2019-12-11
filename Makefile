@@ -7,15 +7,17 @@ clean:
 	rm -rf ./examples/*.test
 	rm -rf *.TMP
 check: 
-	./bf89 ./examples/helloworld.b ./examples/helloworld.in ./examples/helloworld.test
+	time ./bf89 ./examples/helloworld.b ./examples/helloworld.in ./examples/helloworld.test
 	diff ./examples/helloworld.out ./examples/helloworld.test
-	./bf89 ./examples/beer.b ./examples/beer.in ./examples/beer.test
+	time ./bf89 ./examples/beer.b ./examples/beer.in ./examples/beer.test
 	diff ./examples/beer.out ./examples/beer.test
-	./bf89 ./examples/prime.b ./examples/prime.in ./examples/prime.test
+	time ./bf89 ./examples/prime.b ./examples/prime.in ./examples/prime.test
 	diff ./examples/prime.test ./examples/prime.out
-	./bf89 ./examples/666.bf ./examples/666.in ./examples/666.test
+	time ./bf89 ./examples/666.bf ./examples/666.in ./examples/666.test
 	diff ./examples/666.out ./examples/666.test
-	./bf89 ./examples/sierpinski.bf ./examples/sierpinski.in ./examples/sierpinski.test
+	time ./bf89 ./examples/sierpinski.bf ./examples/sierpinski.in ./examples/sierpinski.test
 	diff ./examples/sierpinski.out ./examples/sierpinski.test
-	./bf89 ./examples/dbfi.bf ./examples/dbfi.in ./examples/dbfi.test
+	time ./bf89 ./examples/dbfi.bf ./examples/dbfi.in ./examples/dbfi.test
 	diff ./examples/dbfi.test ./examples/beer.out
+	time ./bf89 ./examples/collatz.b ./examples/collatz.in ./examples/collatz.test
+	diff ./examples/collatz.test ./examples/collatz.out
