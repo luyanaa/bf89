@@ -19,5 +19,3 @@ check:
 	diff ./examples/sierpinski.out ./examples/sierpinski.test
 	time ./bf89 ./examples/dbfi.bf ./examples/dbfi.in ./examples/dbfi.test
 	diff ./examples/dbfi.test ./examples/beer.out
-	time ./bf89 ./examples/collatz.b ./examples/collatz.in ./examples/collatz.test
-	diff ./examples/collatz.test ./examples/collatz.out
